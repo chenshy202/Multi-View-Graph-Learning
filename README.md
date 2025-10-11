@@ -6,7 +6,7 @@ This repository contains the official PyTorch implementation for our paper, "Mul
 - The `molecule/` directory contains all code and experiments related to the molecular property prediction.
 - The `cosmology/` directory contains all code and experiments related to the cosmological parameter inference.
 - Dependencies mainly follow [nhuang37/InvariantFeatures](https://github.com/nhuang37/InvariantFeatures).
-   
+  
 
 
 ## Datasets
@@ -17,5 +17,5 @@ This repository contains the official PyTorch implementation for our paper, "Mul
 ## Experiments
 - For molecular property prediction: run `python main.py`.
 - For cosmological parameter inference: 
-  - Build radius graphs from the [CAMELS/CAMELS-SAM HDF5 files](https://users.flatironinstitute.org/~fvillaescusa/CosmoBench/) through `prepossesing.py` and saves them as PyG Data objects.
+  - Build radius graphs from the [CAMELS/CAMELS-SAM HDF5 files](https://users.flatironinstitute.org/~fvillaescusa/CosmoBench/) through `prepossessing.py` and saves them as PyG Data objects.
   - Run `python main.py` and `python main_gt.py`.
