@@ -1,0 +1,2 @@
+best_epoch,best_val_R2,test_loss,test_R2,bootstrap_R2_mean,bootstrap_R2_std,total_sec,seed
+153,0.875875,0.001647,0.873745,0.873026,0.015603,4228.119,62025

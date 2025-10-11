@@ -1,0 +1,13 @@
+{
+  "data_dir": "/data/schen355/cosmodata/CosmoBench_CAMELS-SAM",
+  "group": "LH",
+  "Rc1": 1.0,
+  "Rc2": 2.0,
+  "batch_size": 8,
+  "hid_dim": 96,
+  "n_layers": 3,
+  "lr": 0.0005,
+  "weight_decay": 1e-05,
+  "seed": 2025,
+  "device": "cuda:3"
+}

@@ -1,0 +1,126 @@
+Target 0:
+Cross-val MAEs: [[5.91312203 6.67159082 5.93716486 7.55594232 6.90462355 6.63132615
+  7.21222889 6.69822026 6.11920005 7.35233124]]
+==================================================
+Target 1:
+Cross-val MAEs: [[0.95708267 0.95343167 0.93430113 0.95711189 0.8999118  0.93593012
+  1.02681185 0.94427615 0.98604347 0.95943576]]
+==================================================
+Target 2:
+Cross-val MAEs: [[0.0612775  0.06590086 0.05929035 0.05718086 0.06159134 0.05866824
+  0.06568406 0.06207213 0.06456691 0.06097469]]
+==================================================
+Target 3:
+Cross-val MAEs: [[0.14671722 0.1575699  0.12151948 0.14061479 0.11613341 0.12589716
+  0.11647142 0.12474797 0.12137936 0.1400647 ]]
+==================================================
+Target 4:
+Cross-val MAEs: [[0.06797358 0.06528703 0.06662144 0.06627839 0.06670314 0.07590207
+  0.06210619 0.06953702 0.06660029 0.06562762]]
+==================================================
+Target 5:
+Cross-val MAEs: [[0.10597258 0.11356746 0.1100737  0.12250411 0.10341116 0.11061492
+  0.09982542 0.10504153 0.10676268 0.13247144]]
+==================================================
+Target 6:
+Cross-val MAEs: [[0.14244902 0.17506826 0.14050294 0.13638692 0.13436506 0.14936108
+  0.13328137 0.17033312 0.15824136 0.16645531]]
+==================================================
+Target 7:
+Cross-val MAEs: [[0.07282507 0.07293704 0.07374624 0.07078958 0.0731029  0.07163048
+  0.07265705 0.08801227 0.0633505  0.07179073]]
+==================================================
+Target 8:
+Cross-val MAEs: [[0.1390368  0.13318715 0.12906654 0.13449144 0.13439332 0.12935495
+  0.12121833 0.13686684 0.12864856 0.14024925]]
+==================================================
+Target 9:
+Cross-val MAEs: [[0.0803399  0.08368379 0.08156305 0.093893   0.08338725 0.08122046
+  0.07870605 0.08647176 0.08681194 0.08316849]]
+==================================================
+Target 10:
+Cross-val MAEs: [[0.15589791 0.14062319 0.14083281 0.15586903 0.14056468 0.15543033
+  0.13888467 0.14863156 0.14563326 0.15909901]]
+==================================================
+Target 11:
+Cross-val MAEs: [[0.10379643 0.10097903 0.10175523 0.10334311 0.09831426 0.11244641
+  0.10131223 0.10225563 0.08702796 0.10076619]]
+==================================================
+Target 12:
+Cross-val MAEs: [[0.10460003 0.09125601 0.0863411  0.09442268 0.10643572 0.08972033
+  0.09995844 0.10728479 0.09348225 0.10109297]]
+==================================================
+Target 13:
+Cross-val MAEs: [[0.07658124 0.06987268 0.07544181 0.08041537 0.06945372 0.07283265
+  0.06605073 0.0660043  0.06616156 0.06647948]]
+==================================================
+
+
+Standard version: Resnet+LayerNorm
+
+class Gt_GINE_Conv(nn.Module):
+    def __init__(self, hidden_dim, edge_dim):
+        super().__init__()
+
+        self.gine1 = GINEConv(MLP([hidden_dim, hidden_dim, hidden_dim]))
+        self.gine2 = GINEConv(MLP([hidden_dim, hidden_dim, hidden_dim]))
+        self.gine12 = GINEConv(MLP([hidden_dim, hidden_dim, hidden_dim]))
+        self.gine21 = GINEConv(MLP([hidden_dim, hidden_dim, hidden_dim]))
+
+        self.c1 = nn.Parameter(torch.tensor(0.8))
+        self.c2 = nn.Parameter(torch.tensor(0.1))
+        self.c12 = nn.Parameter(torch.tensor(0.05))
+        self.c21 = nn.Parameter(torch.tensor(0.05))
+
+        self.edge_encoder1 = nn.Linear(edge_dim, hidden_dim) 
+        self.edge_encoder2 = nn.Linear(edge_dim, hidden_dim) 
+
+    def forward(self, x, data):
+        x_initial = x
+
+        edge_index1, edge_attr1 = data.edge_index_A1, data.edge_attr_A1
+        edge_index2, edge_attr2 = data.edge_index_A2, data.edge_attr_A2
+        
+        enc_edge_attr1 = self.edge_encoder1(edge_attr1)
+        enc_edge_attr2 = self.edge_encoder2(edge_attr2)
+
+        
+        h_path1 = self.gine1(x, edge_index1, enc_edge_attr1) 
+        h_path2 = self.gine2(x, edge_index2, enc_edge_attr2) 
+        h_path12 = self.gine12(h_path1, edge_index2, enc_edge_attr2)
+        h_path21 = self.gine21(h_path2, edge_index1, enc_edge_attr1)
+
+
+        h_final = x_initial + self.c1 * h_path1 + self.c2 * h_path2 + self.c12 * h_path12 + self.c21 * h_path21
+
+        return h_final
+
+
+class Gt_GINE_Model(torch.nn.Module):
+    def __init__(self, node_feature_dim, hidden_dim, out_dim, edge_dim=100, num_layers=2):
+        super(Gt_GINE_Model, self).__init__()
+        self.out_dim = out_dim
+        self.atom_encoder = nn.Linear(node_feature_dim, hidden_dim) 
+
+        self.convs = torch.nn.ModuleList()
+        self.norms = nn.ModuleList()
+        for i in range(num_layers):
+            # mlp = MLP([hidden_dim, hidden_dim, hidden_dim], act="ReLU", batch_norm=True)
+            self.convs.append(Gt_GINE_Conv(hidden_dim, edge_dim))
+            self.norms.append(nn.LayerNorm(hidden_dim))
+            
+        self.final_mlp = MLP([hidden_dim, hidden_dim, out_dim], act="ReLU", batch_norm=True)
+
+    def forward(self, data):
+        x, batch = data.f_d, data.batch
+        
+        x = self.atom_encoder(x)
+        
+        for i, conv in enumerate(self.convs):
+            x = conv(x, data)
+            x = self.norms[i](x)
+            x = F.relu(x) 
+
+        x = global_mean_pool(x, batch)
+        x = self.final_mlp(x)
+        return x
