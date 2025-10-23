@@ -12,7 +12,7 @@ This repository contains the official PyTorch implementation for our paper, "Mul
 ## Datasets
 
 - For molecular property prediction, we use the QM7b dataset provided by PyTorch Geometric, which can be loaded via `from torch_geometric.datasets import QM7b`.
-- For molecular property prediction, we use the point-cloud suites from CosmoBench (CAMELS and CAMELS-SAM), downloaded from the official site: [cosmobench](https://cosmobench.streamlit.app/).
+- For cosmological parameter inference, we use the point-cloud suites from CosmoBench (CAMELS and CAMELS-SAM), downloaded from the official site: [cosmobench](https://cosmobench.streamlit.app/).
 
 ## Experiments
 - For molecular property prediction: run `python main.py`.
